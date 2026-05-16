@@ -149,7 +149,7 @@ export default function Page() {
           <p className="text-base font-bold text-emerald-900 mb-1">💬 AI Chatbot Available 24/7</p>
           <p className="text-xs text-gray-500 mb-5">Neeche right corner mein chat button dabayein — fees, timing, documents ke baare mein foran jawab</p>
           <a
-            href="https://wa.me/923001234567"
+            href="https://wa.me/923130654431"
             target="_blank"
             rel="noopener"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-teal-600 text-white px-6 py-3 rounded-full text-sm font-bold shadow-lg shadow-green-200 hover:shadow-xl hover:scale-105 transition-all duration-200"
