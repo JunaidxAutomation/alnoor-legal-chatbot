@@ -38,14 +38,14 @@ export default function Page() {
             "🎯 Pehli consultation bilkul FREE hai!",
             "📋 Rent agreement sirf Rs. 1,500 mein",
             "⚡ Contract 1-2 din mein ready",
-            "📞 Call: 0300-1234567",
+            "📞 Call: 0313-0654431",
             "🕐 Mon-Sat: 9am - 6pm",
             "✅ 15+ saal ka tajruba",
             "🏠 Property documents — Gujranwala",
             "🎯 Pehli consultation bilkul FREE hai!",
             "📋 Rent agreement sirf Rs. 1,500 mein",
             "⚡ Contract 1-2 din mein ready",
-            "📞 Call: 0300-1234567",
+            "📞 Call: 0313-0654431",
             "🕐 Mon-Sat: 9am - 6pm",
             "✅ 15+ saal ka tajruba",
             "🏠 Property documents — Gujranwala",
@@ -166,7 +166,7 @@ export default function Page() {
 
       {/* Fixed WhatsApp Button — left side above footer */}
       <a
-        href="https://wa.me/923001234567"
+        href="https://wa.me/923130654431"
         target="_blank"
         rel="noopener"
         aria-label="WhatsApp"

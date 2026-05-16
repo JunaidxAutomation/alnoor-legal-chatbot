@@ -24,7 +24,7 @@ const ANNOUNCEMENTS = [
   "🎯 Pehli consultation bilkul FREE hai!",
   "📋 Rent agreement sirf Rs. 1,500 mein",
   "⚡ Contract 1-2 din mein ready",
-  "📞 Call: 0300-1234567",
+  "📞 Call: 0313-0654431",
   "🕐 Mon-Sat: 9am - 6pm",
 ]
 
