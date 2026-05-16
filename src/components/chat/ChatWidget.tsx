@@ -484,39 +484,7 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Announcement Ticker */}
-          <div style={{
-              height: "36px",
-              background: "linear-gradient(90deg, #ec4899 0%, #8b5cf6 25%, #06b6d4 55%, #3b82f6 75%, #ec4899 100%)",
-              backgroundSize: "300% 100%",
-              animation: "annGradient 8s linear infinite",
-              display: "flex",
-              alignItems: "center",
-              overflow: "hidden",
-              flexShrink: 0,
-            }}>
-              <div style={{
-                display: "flex",
-                animation: "annScroll 20s linear infinite",
-                whiteSpace: "nowrap",
-              }}>
-                {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((text, i) => (
-                  <span key={i} style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "0 28px",
-                    color: "rgba(255,255,255,0.95)",
-                    fontSize: "11.5px",
-                    fontWeight: 600,
-                    letterSpacing: "0.3px",
-                  }}>
-                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.6)", display: "inline-block", flexShrink: 0 }} />
-                    {text}
-                  </span>
-                ))}
-              </div>
-            </div>
+          
 
           {/* Messages */}
           <div className="messages-area">

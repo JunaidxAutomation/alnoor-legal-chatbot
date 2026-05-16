@@ -6,6 +6,67 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-purple-50 font-sans">
 
+      {/* Top Announcement Bar */}
+      <div style={{
+        height: "38px",
+        background: "linear-gradient(90deg, #064e3b 0%, #059669 25%, #0d9488 55%, #047857 80%, #064e3b 100%)",
+        backgroundSize: "300% 100%",
+        animation: "annGradient 8s linear infinite",
+        display: "flex",
+        alignItems: "center",
+        overflow: "hidden",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
+        <style>{`
+          @keyframes annGradient {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+          }
+          @keyframes annScroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+        <div style={{
+          display: "flex",
+          animation: "annScroll 25s linear infinite",
+          whiteSpace: "nowrap",
+        }}>
+          {[
+            "🎯 Pehli consultation bilkul FREE hai!",
+            "📋 Rent agreement sirf Rs. 1,500 mein",
+            "⚡ Contract 1-2 din mein ready",
+            "📞 Call: 0300-1234567",
+            "🕐 Mon-Sat: 9am - 6pm",
+            "✅ 15+ saal ka tajruba",
+            "🏠 Property documents — Gujranwala",
+            "🎯 Pehli consultation bilkul FREE hai!",
+            "📋 Rent agreement sirf Rs. 1,500 mein",
+            "⚡ Contract 1-2 din mein ready",
+            "📞 Call: 0300-1234567",
+            "🕐 Mon-Sat: 9am - 6pm",
+            "✅ 15+ saal ka tajruba",
+            "🏠 Property documents — Gujranwala",
+          ].map((text, i) => (
+            <span key={i} style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0 28px",
+              color: "rgba(255,255,255,0.95)",
+              fontSize: "11.5px",
+              fontWeight: 600,
+              letterSpacing: "0.3px",
+            }}>
+              <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.5)", display: "inline-block" }} />
+              {text}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Hero */}
       <section className="pt-16 pb-8 px-5 text-center animate-fade-up">
         <div className="rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-emerald-200 animate-float" style={{ width: 88, height: 88 }}>
