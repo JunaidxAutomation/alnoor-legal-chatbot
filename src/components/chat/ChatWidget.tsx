@@ -103,6 +103,16 @@ export default function ChatWidget() {
   return (
     <>
       <style>{`
+        @keyframes ticker-slide {
+          0%   { transform: translateX(60px); opacity: 0; }
+          15%  { transform: translateX(0);    opacity: 1; }
+          80%  { transform: translateX(0);    opacity: 1; }
+          100% { transform: translateX(-60px); opacity: 0; }
+        }
+        @keyframes bg-shift {
+          0%,100% { background-position: 0% 50%; }
+          50%     { background-position: 100% 50%; }
+        }
         @keyframes gradient-x {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -139,7 +149,7 @@ export default function ChatWidget() {
 
         .chat-launcher {
           position: fixed;
-          bottom: 24px;
+          bottom: 82px;
           right: 24px;
           z-index: 9997;
           width: 60px;
@@ -463,7 +473,7 @@ export default function ChatWidget() {
               textShadow: "0 1px 3px rgba(0,0,0,0.25)",
             }}
           >
-            {ANNOUNCEMENTS[announcementIndex]}
+            <span key={announcementIndex} style={{display:"inline-block",animation:"ticker-slide 3s ease forwards"}}>{ANNOUNCEMENTS[announcementIndex]}</span>
           </div>
 
           {/* Messages */}
