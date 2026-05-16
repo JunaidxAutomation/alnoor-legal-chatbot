@@ -103,15 +103,13 @@ export default function ChatWidget() {
   return (
     <>
       <style>{`
-        @keyframes ticker-slide {
-          0%   { transform: translateX(60px); opacity: 0; }
-          15%  { transform: translateX(0);    opacity: 1; }
-          80%  { transform: translateX(0);    opacity: 1; }
-          100% { transform: translateX(-60px); opacity: 0; }
+        @keyframes annScroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-        @keyframes bg-shift {
-          0%,100% { background-position: 0% 50%; }
-          50%     { background-position: 100% 50%; }
+        @keyframes annGradient {
+          0%   { background-position: 0% 50%; }
+          100% { background-position: 300% 50%; }
         }
         @keyframes gradient-x {
           0%, 100% { background-position: 0% 50%; }
@@ -464,17 +462,38 @@ export default function ChatWidget() {
           </div>
 
           {/* Announcement Ticker */}
-          <div
-            className={`px-4 py-2 text-center text-xs font-semibold text-white tracking-wide transition-opacity duration-400 ${announcementVisible ? "opacity-100" : "opacity-0"}`}
-            style={{
-              background: "linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4, #3b82f6, #a855f7, #ec4899)",
+          <div style={{
+              height: "36px",
+              background: "linear-gradient(90deg, #ec4899 0%, #8b5cf6 25%, #06b6d4 55%, #3b82f6 75%, #ec4899 100%)",
               backgroundSize: "300% 100%",
-              animation: "gradient-x 5s linear infinite",
-              textShadow: "0 1px 3px rgba(0,0,0,0.25)",
-            }}
-          >
-            <span key={announcementIndex} style={{display:"inline-block",animation:"ticker-slide 3s ease forwards"}}>{ANNOUNCEMENTS[announcementIndex]}</span>
-          </div>
+              animation: "annGradient 8s linear infinite",
+              display: "flex",
+              alignItems: "center",
+              overflow: "hidden",
+              flexShrink: 0,
+            }}>
+              <div style={{
+                display: "flex",
+                animation: "annScroll 20s linear infinite",
+                whiteSpace: "nowrap",
+              }}>
+                {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((text, i) => (
+                  <span key={i} style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "0 28px",
+                    color: "rgba(255,255,255,0.95)",
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    letterSpacing: "0.3px",
+                  }}>
+                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.6)", display: "inline-block", flexShrink: 0 }} />
+                    {text}
+                  </span>
+                ))}
+              </div>
+            </div>
 
           {/* Messages */}
           <div className="messages-area">
