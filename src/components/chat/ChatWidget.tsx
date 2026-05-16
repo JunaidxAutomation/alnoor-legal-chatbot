@@ -103,6 +103,10 @@ export default function ChatWidget() {
   return (
     <>
       <style>{`
+        @keyframes gradient-x {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
@@ -450,7 +454,15 @@ export default function ChatWidget() {
           </div>
 
           {/* Announcement Ticker */}
-          <div className="announcement-bar" style={{ opacity: announcementVisible ? 1 : 0 }}>
+          <div
+            className={`px-4 py-2 text-center text-xs font-semibold text-white tracking-wide transition-opacity duration-400 ${announcementVisible ? "opacity-100" : "opacity-0"}`}
+            style={{
+              background: "linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4, #3b82f6, #a855f7, #ec4899)",
+              backgroundSize: "300% 100%",
+              animation: "gradient-x 5s linear infinite",
+              textShadow: "0 1px 3px rgba(0,0,0,0.25)",
+            }}
+          >
             {ANNOUNCEMENTS[announcementIndex]}
           </div>
 

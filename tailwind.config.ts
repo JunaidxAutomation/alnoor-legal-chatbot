@@ -57,6 +57,9 @@ const config: Config = {
       backgroundSize: {
         "300%": "300% 100%",
       },
+      transitionDuration: {
+        "400": "400ms",
+      },
     },
   },
   plugins: [],
