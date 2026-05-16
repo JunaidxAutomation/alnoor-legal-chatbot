@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useRef, useState, useEffect } from "react"
 import { FAQ_DATA, BUSINESS_INFO } from "@/lib/data/faq"
 import { Send, MessageCircle, X, Phone } from "lucide-react"
 
@@ -71,6 +71,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([WELCOME])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [sessionId] = useState(() => `sess_${Math.random().toString(36).slice(2)}_${Date.now()}`)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -88,10 +89,26 @@ export default function ChatWidget() {
     setMessages(p => [...p, { id: Date.now().toString(), role: "user", content: t, timestamp: new Date() }])
     setInput("")
     setIsTyping(true)
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 700))
-    const answer = findFaqAnswer(t) ?? `Is sawaal ke liye seedha rabta karein:\n\n📞 ${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}\n\nHum khushi se madad karein ge!`
-    setIsTyping(false)
-    setMessages(p => [...p, { id: (Date.now()+1).toString(), role: "assistant", content: answer, timestamp: new Date() }])
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: t, sessionId })
+      })
+
+      const data = await res.json()
+
+      if (res.status === 429) {
+        setMessages(p => [...p, { id: (Date.now()+1).toString(), role: "assistant", content: data.error || "Session limit ho gayi. Call karein: 0300-1234567", timestamp: new Date() }])
+      } else {
+        setMessages(p => [...p, { id: (Date.now()+1).toString(), role: "assistant", content: data.response, timestamp: new Date() }])
+      }
+    } catch {
+      setMessages(p => [...p, { id: (Date.now()+1).toString(), role: "assistant", content: "Network masla hai. Please call karein: 0300-1234567", timestamp: new Date() }])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const ft = (d: Date) => d.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" })
