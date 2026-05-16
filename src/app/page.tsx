@@ -116,7 +116,7 @@ export default function Page() {
       </a>
 
       {/* Fixed Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-[9995] bg-white/95 backdrop-blur border-t border-gray-100 shadow-lg px-4 py-3 flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-[9995] bg-white/95 backdrop-blur border-t border-gray-100 shadow-lg px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <div>

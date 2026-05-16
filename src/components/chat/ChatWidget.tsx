@@ -428,7 +428,30 @@ export default function ChatWidget() {
 
       {/* Launcher */}
       {!isOpen && (
-        <button className="chat-launcher" onClick={() => setIsOpen(true)} aria-label="Chat kholein">
+        <button
+          className="chat-launcher chat-launcher-btn"
+          onClick={() => setIsOpen(true)}
+          aria-label="Chat kholein"
+          style={{
+            position: "fixed",
+            bottom: "110px",
+            right: "16px",
+            zIndex: 9997,
+            width: "58px",
+            height: "58px",
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+            boxShadow: "0 8px 28px rgba(5,150,105,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            border: "none",
+            outline: "none",
+            WebkitTapHighlightColor: "transparent",
+            touchAction: "manipulation",
+          }}
+        >
           <Scale size={26} color="white" />
           <div className="chat-badge">1</div>
         </button>

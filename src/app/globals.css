@@ -129,3 +129,10 @@
     @apply font-sans;
   }
 }
+/* Chat launcher mobile fix */
+@media (max-width: 640px) {
+  .chat-launcher-btn {
+    bottom: 80px !important;
+    right: 16px !important;
+  }
+}
