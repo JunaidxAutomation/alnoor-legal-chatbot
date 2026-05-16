@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { FAQ_DATA, BUSINESS_INFO } from "@/lib/data/faq"
+import { BUSINESS_INFO } from "@/lib/data/faq"
 import { Send, MessageCircle, X, Phone } from "lucide-react"
 
 interface Message {
@@ -9,52 +9,6 @@ interface Message {
   role: "user" | "assistant"
   content: string
   timestamp: Date
-}
-
-function findFaqAnswer(query: string): string | null {
-  const q = query.toLowerCase().replace(/[?،۔\.]/g, "").trim()
-  
-  const keywordMap: Record<string, string> = {
-    "rent": "Rent agreement Rs. 1,500 mein banta hai — 1-2 din mein ready ho jata hai. 📋",
-    "reny": "Rent agreement Rs. 1,500 mein banta hai — 1-2 din mein ready ho jata hai. 📋",
-    "kiraya": "Rent agreement Rs. 1,500 mein banta hai — 1-2 din mein ready ho jata hai. 📋",
-    "contract": "Basic contract Rs. 2,000 — Property agreement Rs. 5,000 — Rent agreement Rs. 1,500. 📄",
-    "fee": "Basic contract Rs. 2,000 — Property agreement Rs. 5,000 — Rent agreement Rs. 1,500. 💰",
-    "faiz": "Basic contract Rs. 2,000 — Property agreement Rs. 5,000 — Rent agreement Rs. 1,500. 💰",
-    "paisa": "Basic contract Rs. 2,000 — Property agreement Rs. 5,000 — Rent agreement Rs. 1,500. 💰",
-    "price": "Basic contract Rs. 2,000 — Property agreement Rs. 5,000 — Rent agreement Rs. 1,500. 💰",
-    "time": "Simple contract 1-2 din — Complex agreement 3-5 din mein ready hota hai. ⏰",
-    "waqt": "Simple contract 1-2 din — Complex agreement 3-5 din mein ready hota hai. ⏰",
-    "din": "Simple contract 1-2 din — Complex agreement 3-5 din mein ready hota hai. ⏰",
-    "document": "CNIC copy dono parties ki, property papers (agar property case hai), aur contact details chahiye. 📎",
-    "kagaz": "CNIC copy dono parties ki, property papers (agar property case hai), aur contact details chahiye. 📎",
-    "cnic": "CNIC copy dono parties ki, property papers (agar property case hai), aur contact details chahiye. 📎",
-    "timing": "Monday se Saturday, subah 9 baje se shaam 6 baje tak. Sunday band. 🕐",
-    "time": "Monday se Saturday, subah 9 baje se shaam 6 baje tak. Sunday band. 🕐",
-    "office": "Monday se Saturday, subah 9 baje se shaam 6 baje tak. Sunday band. 🕐",
-    "kab": "Monday se Saturday, subah 9 baje se shaam 6 baje tak. Sunday band. 🕐",
-    "online": "Haan! WhatsApp pe consultation possible hai. 0300-1234567 pe message karein. 📱",
-    "whatsapp": "Haan! WhatsApp pe consultation possible hai. 0300-1234567 pe message karein. 📱",
-    "call": "Zaroor! Call karein: 0300-1234567 — Monday-Saturday, 9am-6pm. 📞",
-    "consult": "Pehli consultation bilkul free hai! Call karein: 0300-1234567 📞",
-    "free": "Haan, pehli meeting bilkul free hai! Appointment ke liye call karein: 0300-1234567 ✅",
-    "sale": "Agreement ek promise hai — Sale Deed legal property transfer hai. Sale Deed registered hoti hai. 🏠",
-    "deed": "Sale Deed property ka legal transfer document hai — registered hoti hai court mein. 🏠",
-    "property": "Property agreement Rs. 5,000 mein banta hai — 3-5 din mein ready. 🏠",
-    "zameen": "Property agreement Rs. 5,000 mein banta hai — 3-5 din mein ready. 🏠",
-  }
-
-  for (const [key, answer] of Object.entries(keywordMap)) {
-    if (q.includes(key)) return answer
-  }
-
-  for (const faq of FAQ_DATA) {
-    const words = faq.question.toLowerCase().split(/[\s,?]+/).filter(w => w.length > 3)
-    const matches = words.filter(w => q.includes(w))
-    if (matches.length >= 2) return faq.answer
-  }
-
-  return null
 }
 
 const WELCOME: Message = {
