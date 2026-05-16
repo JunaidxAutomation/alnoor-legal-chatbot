@@ -12,7 +12,7 @@ export const FAQ_DATA = [
 export const BUSINESS_INFO = {
   name: "AL-NOOR Legal Services",
   location: "Gujranwala, Punjab",
-  phone: "0300-1234567",
+  phone: "0313-0654431",
   timing: "Monday-Saturday, 9am-6pm",
   speciality: "Contracts, Agreements, Property Documents",
   client_id: "alnoor-legal-001"
