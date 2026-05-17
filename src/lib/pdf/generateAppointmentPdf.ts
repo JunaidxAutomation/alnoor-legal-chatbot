@@ -10,63 +10,34 @@ interface AppointmentData {
 
 export async function generateAppointmentPdf(data: AppointmentData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      size: "A4",
-      margin: 50,
-    })
-
+    const doc = new PDFDocument({ size: "A4", margin: 50 })
     const buffers: Buffer[] = []
-    doc.on("data", (chunk) => buffers.push(chunk))
+    doc.on("data", chunk => buffers.push(chunk))
     doc.on("end", () => resolve(Buffer.concat(buffers)))
     doc.on("error", reject)
 
-    // ── HEADER ──────────────────────────────
-    doc
-      .rect(0, 0, doc.page.width, 120)
-      .fill("#059669")
+    // Header
+    doc.rect(0, 0, doc.page.width, 110).fill("#059669")
+    doc.fillColor("white").fontSize(22).font("Helvetica-Bold")
+      .text(BUSINESS_INFO.name, 50, 30, { align: "center" })
+    doc.fontSize(11).font("Helvetica")
+      .text(BUSINESS_INFO.location, 50, 60, { align: "center" })
+    doc.fontSize(10)
+      .text(`${BUSINESS_INFO.phone}  |  ${BUSINESS_INFO.timing}`, 50, 80, { align: "center" })
 
-    doc
-      .fillColor("white")
-      .fontSize(24)
-      .font("Helvetica-Bold")
-      .text(BUSINESS_INFO.name, 50, 35, { align: "center" })
+    // Status
+    doc.rect(50, 128, doc.page.width - 100, 36).fill("#fef3c7")
+    doc.fillColor("#92400e").fontSize(13).font("Helvetica-Bold")
+      .text("⏳  APPOINTMENT STATUS: PENDING CONFIRMATION", 50, 140, { align: "center" })
 
-    doc
-      .fontSize(12)
-      .font("Helvetica")
-      .text(BUSINESS_INFO.location, 50, 68, { align: "center" })
+    // Title
+    doc.fillColor("#064e3b").fontSize(15).font("Helvetica-Bold")
+      .text("APPOINTMENT DETAILS", 50, 190)
+    doc.moveTo(50, 210).lineTo(doc.page.width - 50, 210)
+      .strokeColor("#059669").lineWidth(2).stroke()
 
-    doc
-      .fontSize(11)
-      .text(`${BUSINESS_INFO.phone} | ${BUSINESS_INFO.timing}`, 50, 88, { align: "center" })
-
-    // ── STATUS BADGE ────────────────────────
-    doc
-      .rect(50, 140, doc.page.width - 100, 40)
-      .fill("#fef3c7")
-
-    doc
-      .fillColor("#92400e")
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("⏳  APPOINTMENT STATUS: PENDING", 50, 152, { align: "center" })
-
-    // ── APPOINTMENT DETAILS ─────────────────
-    doc
-      .fillColor("#064e3b")
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .text("APPOINTMENT DETAILS", 50, 210)
-
-    doc
-      .moveTo(50, 232)
-      .lineTo(doc.page.width - 50, 232)
-      .strokeColor("#059669")
-      .lineWidth(2)
-      .stroke()
-
-    // Details rows
-    const details = [
+    // Details
+    const rows = [
       { label: "Customer Name", value: data.name },
       { label: "Phone Number", value: data.phone },
       { label: "Service Required", value: data.interest },
@@ -75,85 +46,32 @@ export async function generateAppointmentPdf(data: AppointmentData): Promise<Buf
       { label: "Location", value: BUSINESS_INFO.location },
     ]
 
-    let y = 250
-    details.forEach((detail, i) => {
-      if (i % 2 === 0) {
-        doc.rect(50, y - 8, doc.page.width - 100, 36).fill("#f9fafb")
-      }
-
-      doc
-        .fillColor("#6b7280")
-        .fontSize(11)
-        .font("Helvetica")
-        .text(detail.label.toUpperCase(), 65, y)
-
-      doc
-        .fillColor("#111827")
-        .fontSize(13)
-        .font("Helvetica-Bold")
-        .text(detail.value, 65, y + 14)
-
-      y += 50
+    let y = 225
+    rows.forEach((row, i) => {
+      if (i % 2 === 0) doc.rect(50, y - 6, doc.page.width - 100, 34).fill("#f9fafb")
+      doc.fillColor("#6b7280").fontSize(9).font("Helvetica")
+        .text(row.label.toUpperCase(), 65, y)
+      doc.fillColor("#111827").fontSize(12).font("Helvetica-Bold")
+        .text(row.value, 65, y + 12)
+      y += 42
     })
 
-    // ── ACTION BOX ──────────────────────────
-    y += 20
-    doc
-      .rect(50, y, doc.page.width - 100, 80)
-      .fill("#ecfdf5")
-      .stroke("#059669")
+    // Action Box
+    y += 15
+    doc.rect(50, y, doc.page.width - 100, 70).fill("#ecfdf5")
+    doc.fillColor("#059669").fontSize(13).font("Helvetica-Bold")
+      .text("ACTION REQUIRED", 65, y + 10)
+    doc.fillColor("#374151").fontSize(10).font("Helvetica")
+      .text(`Customer se rabta karein aur appointment confirm karein.`, 65, y + 28)
+    doc.fillColor("#059669").fontSize(10)
+      .text(`Customer WhatsApp: wa.me/${data.phone.replace(/[\s\-]/g, "").replace(/^0/, "92")}`, 65, y + 44)
 
-    doc
-      .fillColor("#059669")
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("ACTION REQUIRED", 65, y + 12)
-
-    doc
-      .fillColor("#374151")
-      .fontSize(11)
-      .font("Helvetica")
+    // Footer
+    doc.rect(0, doc.page.height - 50, doc.page.width, 50).fill("#f3f4f6")
+    doc.fillColor("#9ca3af").fontSize(9).font("Helvetica")
       .text(
-        `Customer ke saath contact karein aur appointment confirm karein.\nCustomer WhatsApp: wa.me/${data.phone.replace(/[\s\-]/g, "").replace(/^0/, "92")}`,
-        65,
-        y + 32,
-        { width: doc.page.width - 130 }
-      )
-
-    // ── CONFIRM BUTTON LINK ──────────────────
-    y += 110
-    doc
-      .rect(50, y, doc.page.width - 100, 50)
-      .fill("#059669")
-
-    doc
-      .fillColor("white")
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("CONFIRM APPOINTMENT", 50, y + 16, { align: "center" })
-
-    const confirmUrl = `https://alnoor-legal-chatbot.vercel.app/api/confirm?name=${encodeURIComponent(data.name)}&phone=${encodeURIComponent(data.phone)}&interest=${encodeURIComponent(data.interest)}`
-
-    doc
-      .fillColor("#059669")
-      .fontSize(10)
-      .font("Helvetica")
-      .text(confirmUrl, 50, y + 70, { align: "center" })
-
-    // ── FOOTER ──────────────────────────────
-    doc
-      .rect(0, doc.page.height - 60, doc.page.width, 60)
-      .fill("#f3f4f6")
-
-    doc
-      .fillColor("#9ca3af")
-      .fontSize(10)
-      .font("Helvetica")
-      .text(
-        `Generated by AL-NOOR AI Chatbot System | ${new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })}`,
-        50,
-        doc.page.height - 38,
-        { align: "center" }
+        `Generated by AL-NOOR AI Chatbot  |  ${new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })}`,
+        50, doc.page.height - 30, { align: "center" }
       )
 
     doc.end()

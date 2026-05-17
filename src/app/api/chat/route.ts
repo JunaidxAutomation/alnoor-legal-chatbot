@@ -57,16 +57,6 @@ function isOfficeOpen(): boolean {
   return pk.getDay() !== 0 && pk.getHours() >= 9 && pk.getHours() < 18
 }
 
-function getSchedule(lang: string): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
-  const day = d.getDay() === 0 ? "Monday" : days[d.getDay()]
-  if (lang === "urdu") return `📅 *${day} صبح 10 بجے*\n📅 *${day} شام 4 بجے*\n\nکونسا وقت مناسب ہے؟`
-  if (lang === "roman") return `📅 *${day} subah 10 AM*\n📅 *${day} shaam 4 PM*\n\nKaunsa time suit karega?`
-  return `📅 *${day} 10:00 AM*\n📅 *${day} 4:00 PM*\n\nWhich time works?`
-}
-
 function quickFaq(query: string): string | null {
   const q = query.toLowerCase()
   for (const faq of FAQ_DATA) {
@@ -128,25 +118,6 @@ async function sendToN8N(data: { name: string; phone: string; interest: string; 
   }
 }
 
-async function sendWhatsApp(phone: string, message: string) {
-  try {
-    const instance = process.env.GREEN_API_INSTANCE
-    const token = process.env.GREEN_API_TOKEN
-    if (!instance || !token) return
-    const chatId = phone.replace(/[\s\-]/g, "").replace(/^0/, "92") + "@c.us"
-    await fetch(
-      `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, message })
-      }
-    )
-  } catch (err) {
-    console.error("WhatsApp failed:", err)
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { message, sessionId } = await req.json()
@@ -166,7 +137,7 @@ export async function POST(req: NextRequest) {
     await new Promise(r => setTimeout(r, 400 + Math.random() * 500))
 
     // Business hours — first message
-    if (session.count === 1 && false) {
+    if (session.count === 1 && !isOfficeOpen()) {
       return NextResponse.json({
         response: session.lang === "urdu"
           ? `السلام علیکم! 😊\n\nابھی دفتر بند ہے۔\n🕐 ${BUSINESS_INFO.timing}\n\nمیں آپ کے سوالوں کا جواب دے سکتا ہوں!`
@@ -224,6 +195,13 @@ export async function POST(req: NextRequest) {
 
         // N8N notification
         await sendToN8N({ name: session.name, phone: session.phone, interest: session.interest, time })
+
+        // PDF send — background
+        fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/send-pdf`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: session.name, phone: session.phone, interest: session.interest, time })
+        }).catch(err => console.error("PDF failed:", err))
 
         return NextResponse.json({
           response: session.lang === "urdu"
