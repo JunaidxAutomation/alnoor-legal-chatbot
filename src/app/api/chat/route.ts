@@ -193,8 +193,47 @@ export async function POST(req: NextRequest) {
         leads.push({ name: session.name, phone: session.phone, interest: session.interest, time })
         console.log("🔔 NEW LEAD:", session.name, session.phone)
 
-        // N8N notification
-        await sendToN8N({ name: session.name, phone: session.phone, interest: session.interest, time })
+        // Client ko WhatsApp notification
+        try {
+          const instance = process.env.GREEN_API_INSTANCE
+          const token = process.env.GREEN_API_TOKEN
+          const clientPhone = process.env.CLIENT_WHATSAPP
+          if (instance && token && clientPhone) {
+            const baseUrl = "https://alnoor-legal-chatbot.vercel.app"
+            const confirmUrl = `${baseUrl}/api/confirm?name=${encodeURIComponent(session.name)}&phone=${encodeURIComponent(session.phone)}&interest=${encodeURIComponent(session.interest)}`
+            const cancelUrl = `${baseUrl}/api/cancel?name=${encodeURIComponent(session.name)}&phone=${encodeURIComponent(session.phone)}`
+            const service = session.interest.toLowerCase().includes("rent") ? "Rent Agreement"
+              : session.interest.toLowerCase().includes("property") ? "Property Agreement"
+              : session.interest.toLowerCase().includes("consult") ? "Consultation"
+              : "Contract"
+            await fetch(
+              `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chatId: `${clientPhone}@c.us`,
+                  message:
+                    `🔔 *AL-NOOR Legal Services*\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `📋 *${service} Request*\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `👤 *Customer:* ${session.name}\n` +
+                    `📞 *Phone:* ${session.phone}\n` +
+                    `💼 *Service:* ${session.interest}\n` +
+                    `🕐 *Time:* ${time}\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `✅ *CONFIRM:*\n${confirmUrl}\n\n` +
+                    `❌ *CANCEL:*\n${cancelUrl}\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `_AL-NOOR AI Chatbot_`
+                })
+              }
+            )
+          }
+        } catch (err) {
+          console.error("WhatsApp failed:", err)
+        }
 
         // PDF send — background
         fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/send-pdf`, {
