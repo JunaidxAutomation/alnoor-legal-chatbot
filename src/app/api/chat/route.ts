@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Business hours — first message only
-    if (session.count === 1 && !isOfficeOpen()) {
+    if (session.count === 1 && false) {
       const closed = session.lang === "urdu"
         ? `السلام علیکم! 😊\n\nابھی دفتر بند ہے۔\n🕐 ${BUSINESS_INFO.timing}\n\nمیں آپ کے سوالوں کا جواب دے سکتا ہوں — پوچھیں!`
         : session.lang === "roman"
