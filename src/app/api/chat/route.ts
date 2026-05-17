@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     await new Promise(r => setTimeout(r, 400 + Math.random() * 500))
 
     // Business hours — first message
-    if (session.count === 1 && !isOfficeOpen()) {
+    if (session.count === 1 && false) {
       return NextResponse.json({
         response: session.lang === "urdu"
           ? `السلام علیکم! 😊\n\nابھی دفتر بند ہے۔\n🕐 ${BUSINESS_INFO.timing}\n\nمیں آپ کے سوالوں کا جواب دے سکتا ہوں!`
