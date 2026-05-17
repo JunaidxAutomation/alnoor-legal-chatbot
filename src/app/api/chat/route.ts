@@ -188,17 +188,34 @@ export async function POST(req: NextRequest) {
     }
 
     // Stage: confirm2
-    if (session.stage === "confirm2") {
+   if (session.stage === "confirm2") {
       if (isYes(message)) {
         session.stage = "done"
         leads.push({ name: session.name, phone: session.phone, interest: session.interest, time: new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" }) })
         console.log("🔔 NEW LEAD:", session.name, session.phone)
+
+        // N8N webhook call
+        try {
+          await fetch(process.env.N8N_WEBHOOK_URL!, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: session.name,
+              phone: session.phone,
+              interest: session.interest,
+              time: new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })
+            })
+          })
+        } catch (err) {
+          console.error("N8N webhook failed:", err)
+        }
+
         return NextResponse.json({
           response: session.lang === "urdu"
-            ? `✅ شکریہ ${session.name}!\n\nآپ کی درخواست موصول ہو گئی۔\n\n${getSchedule(session.lang)}\n\n📞 ${BUSINESS_INFO.phone}\n\nجلد رابطہ ہوگا۔ 🙏`
+            ? `⏳ شکریہ ${session.name}!\n\nآپ کی details موصول ہو گئی ہیں۔\n\n📋 Status: *Pending*\n\nہمارا staff جلد آپ سے رابطہ کرے گا اور appointment confirm کرے گا۔\n\n📞 خود بھی call کر سکتے ہیں:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
             : session.lang === "roman"
-            ? `✅ Shukriya ${session.name}!\n\nAapki request mil gayi.\n\n${getSchedule(session.lang)}\n\n📞 ${BUSINESS_INFO.phone}\n\nJald rabta hoga. 🙏`
-            : `✅ Thank you ${session.name}!\n\nRequest received.\n\n${getSchedule(session.lang)}\n\n📞 ${BUSINESS_INFO.phone}\n\nWe'll contact you soon. 🙏`
+            ? `⏳ Shukriya ${session.name}!\n\nAapki details mil gayi hain.\n\n📋 Status: *Pending*\n\nHamara staff jald aap se rabta karega aur appointment confirm karega.\n\n📞 Khud bhi call kar sakte hain:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
+            : `⏳ Thank you ${session.name}!\n\nYour details have been received.\n\n📋 Status: *Pending*\n\nOur staff will contact you shortly to confirm your appointment.\n\n📞 You can also call us:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
         })
       }
       if (isNo(message)) {
