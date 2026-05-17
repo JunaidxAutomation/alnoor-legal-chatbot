@@ -205,7 +205,12 @@ function detectLang(text: string): Lang {
 // INTENT DETECTION
 // ═══════════════════════════════════════
 function hasInterest(text: string): boolean {
-  return /\b(consult|consultation|appointment|book|schedule|meeting|visit|milna|milein|aana|aayen|banana|banwana|chahiye|ready|zaroor|bilkul|agree|confirm|rabta)\b|[\u0600-\u06FF]*(ملنا|آنا|چاہیے|مشاورت|اپائنٹمنٹ|ضرور|بالکل|تیار)/i.test(text)
+  const t = text.toLowerCase()
+  return (
+    /consult|appointment|milna|milein|aana|aayen|banana|banwana|book|schedule|meeting|visit|rabta|contact/i.test(t) ||
+    /chahiye|ready|zaroor|bilkul|agree|confirm|send|bhejo|lena hai|leni hai/i.test(t) ||
+    /[\u0600-\u06FF]*(ملنا|آنا|چاہیے|مشاورت|اپائنٹمنٹ|ضرور|بالکل|تیار|چاہتا|چاہتی)/.test(text)
+  )
 }
 
 function isYes(text: string): boolean {
