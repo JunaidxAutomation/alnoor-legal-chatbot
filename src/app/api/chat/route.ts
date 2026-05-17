@@ -260,6 +260,35 @@ export async function POST(req: NextRequest) {
         response: session.lang === "urdu" ? "✅ جی ہاں\n❌ نہیں" : "✅ Haan\n❌ Nahi"
       })
     }
+    // Customer ko WhatsApp
+        try {
+          const instance = process.env.GREEN_API_INSTANCE
+          const token = process.env.GREEN_API_TOKEN
+          if (instance && token) {
+            const customerPhone = session.phone.replace(/[\s\-]/g, "").replace(/^0/, "92") + "@c.us"
+            await fetch(
+              `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chatId: customerPhone,
+                  message:
+                    `⏳ *Request Received!*\n\n` +
+                    `Assalam o Alaikum *${session.name}*! 😊\n\n` +
+                    `Aapki request hamare system mein darj ho gayi hai.\n\n` +
+                    `📋 *Status: Pending*\n\n` +
+                    `Hamara staff jald aap se rabta karega.\n\n` +
+                    `📞 ${process.env.NEXT_PUBLIC_APP_URL ? "" : ""}*${BUSINESS_INFO.phone}*\n` +
+                    `🕐 ${BUSINESS_INFO.timing}\n\n` +
+                    `_AL-NOOR Legal Services_`
+                })
+              }
+            )
+          }
+        } catch (err) {
+          console.error("Customer WhatsApp failed:", err)
+        }
 
     // Stage: confirm1
     if (session.stage === "confirm1") {
