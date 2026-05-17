@@ -528,13 +528,7 @@ export async function POST(req: NextRequest) {
 
     // Sentiment prefix
     const prefix = getSentimentPrefix(session.sentiment, lang)
-    // ── Appointment keyword override ──
-    const appointmentWords = /\b(consultation|consult|appointment|milna|banana|banwana|chahiye|book|meeting|visit)\b/i
-    if (session.stage === "normal" && appointmentWords.test(message)) {
-      session.stage = "confirm1"
-      session.interest = message.slice(0, 150)
-      return NextResponse.json({ response: t(lang, "confirm1") })
-    }
+
     
     // Layer 0: FAQ quick match
     const faqAnswer = quickFaqMatch(message)
