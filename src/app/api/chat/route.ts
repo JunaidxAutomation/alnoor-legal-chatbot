@@ -21,7 +21,7 @@ function getSession(id: string) {
   const now = Date.now()
   const s = sessions.get(id)
   if (s && now - s.createdAt < 86400000) return s
-  const ns = { count: 0, createdAt: now, lang: "roman", stage: "normal", name: "", phone: "", interest: "", msgs: [] as { role: string; content: string }[] }
+  const ns = { count: 0, createdAt: now, lang: "english", stage: "normal", name: "", phone: "", interest: "", msgs: [] as { role: string; content: string }[] }
   sessions.set(id, ns)
   return ns
 }
@@ -83,7 +83,9 @@ function quickFaq(query: string): string | null {
 
 function getSystemPrompt(lang: string): string {
   const faqs = FAQ_DATA.map((f, i) => `${i+1}. Q: ${f.question}\n   A: ${f.answer}`).join("\n\n")
-  const langRule = lang === "urdu" ? "ALWAYS respond in Urdu script only." : lang === "roman" ? "ALWAYS respond in Roman Urdu only." : "ALWAYS respond in English only."
+  const langRule = lang === "urdu"
+  ? "CRITICAL: Respond ONLY in Pakistani Urdu script. Do NOT use Hindi words. Do NOT use Roman Urdu. Pure Urdu script only."
+  : "CRITICAL: Respond ONLY in English. Do NOT use Urdu, Hindi, or Roman Urdu. Clean professional English only."
   return `You are a professional AI assistant for ${BUSINESS_INFO.name}, ${BUSINESS_INFO.location}, Pakistan.
 ${langRule}
 Phone: ${BUSINESS_INFO.phone} | Hours: ${BUSINESS_INFO.timing}
