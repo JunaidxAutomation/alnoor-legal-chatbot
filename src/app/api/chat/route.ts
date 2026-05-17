@@ -21,7 +21,11 @@ function getSession(id: string) {
   const now = Date.now()
   const s = sessions.get(id)
   if (s && now - s.createdAt < 86400000) return s
-  const ns = { count: 0, createdAt: now, lang: "english", stage: "normal", name: "", phone: "", interest: "", msgs: [] as { role: string; content: string }[] }
+  const ns = {
+    count: 0, createdAt: now, lang: "english",
+    stage: "normal", name: "", phone: "", interest: "",
+    msgs: [] as { role: string; content: string }[]
+  }
   sessions.set(id, ns)
   return ns
 }
@@ -33,7 +37,7 @@ function detectLang(text: string): string {
 }
 
 function isYes(text: string): boolean {
-  return /^(h|y|ha|ok|ji|haa)$|haan|han|yes|yep|okay|theek|zaroor|bilkul|sure|ready|confirm|ji\b|agree|done|proceed|bhejo/i.test(text.trim())
+  return /^(h|y|ha|ok|ji|haa)$|haan|han|yes|yep|okay|theek|zaroor|bilkul|sure|ready|confirm|ji\b|agree|done|proceed/i.test(text.trim())
 }
 
 function isNo(text: string): boolean {
@@ -48,17 +52,9 @@ function hasAppointmentIntent(text: string): boolean {
   return /consult|appointment|milna|banana|banwana|book|meeting|visit|chahiye|zaroor|bilkul|ready|rabta|contact/i.test(text)
 }
 
-function detectSpam(text: string): boolean {
-  if (text.length > 500) return true
-  if (/^[^a-zA-Z\u0600-\u06FF0-9\s]{3,}$/.test(text)) return true
-  return false
-}
-
 function isOfficeOpen(): boolean {
   const pk = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" }))
-  const day = pk.getDay()
-  const hour = pk.getHours()
-  return day !== 0 && hour >= 9 && hour < 18
+  return pk.getDay() !== 0 && pk.getHours() >= 9 && pk.getHours() < 18
 }
 
 function getSchedule(lang: string): string {
@@ -66,9 +62,9 @@ function getSchedule(lang: string): string {
   d.setDate(d.getDate() + 1)
   const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
   const day = d.getDay() === 0 ? "Monday" : days[d.getDay()]
-  if (lang === "urdu") return `📅 **${day} صبح 10 بجے**\n📅 **${day} شام 4 بجے**\n\nکونسا وقت مناسب ہے؟`
-  if (lang === "roman") return `📅 **${day} subah 10 AM**\n📅 **${day} shaam 4 PM**\n\nKaunsa time suit karega?`
-  return `📅 **${day} 10:00 AM**\n📅 **${day} 4:00 PM**\n\nWhich time works?`
+  if (lang === "urdu") return `📅 *${day} صبح 10 بجے*\n📅 *${day} شام 4 بجے*\n\nکونسا وقت مناسب ہے؟`
+  if (lang === "roman") return `📅 *${day} subah 10 AM*\n📅 *${day} shaam 4 PM*\n\nKaunsa time suit karega?`
+  return `📅 *${day} 10:00 AM*\n📅 *${day} 4:00 PM*\n\nWhich time works?`
 }
 
 function quickFaq(query: string): string | null {
@@ -84,17 +80,19 @@ function quickFaq(query: string): string | null {
 function getSystemPrompt(lang: string): string {
   const faqs = FAQ_DATA.map((f, i) => `${i+1}. Q: ${f.question}\n   A: ${f.answer}`).join("\n\n")
   const langRule = lang === "urdu"
-  ? "CRITICAL: Respond ONLY in Pakistani Urdu script. Do NOT use Hindi words. Do NOT use Roman Urdu. Pure Urdu script only."
-  : "CRITICAL: Respond ONLY in English. Do NOT use Urdu, Hindi, or Roman Urdu. Clean professional English only."
+    ? "CRITICAL: Respond ONLY in Pakistani Urdu script. Do NOT use Hindi words."
+    : lang === "roman"
+    ? "CRITICAL: Respond ONLY in Roman Urdu."
+    : "CRITICAL: Respond ONLY in English. Professional tone."
   return `You are a professional AI assistant for ${BUSINESS_INFO.name}, ${BUSINESS_INFO.location}, Pakistan.
 ${langRule}
 Phone: ${BUSINESS_INFO.phone} | Hours: ${BUSINESS_INFO.timing}
 Services: ${BUSINESS_INFO.speciality}
 
-FAQ KNOWLEDGE:
+FAQ:
 ${faqs}
 
-RULES: Only answer about this office. Never give legal advice. Keep answers 2-3 lines. Unknown questions → give phone number: ${BUSINESS_INFO.phone}`
+RULES: Only answer about this office. Never give legal advice. Keep answers 2-3 lines. Unknown → give phone: ${BUSINESS_INFO.phone}`
 }
 
 async function getAI(message: string, session: ReturnType<typeof getSession>): Promise<string> {
@@ -117,6 +115,38 @@ async function getAI(message: string, session: ReturnType<typeof getSession>): P
   }
 }
 
+async function sendToN8N(data: { name: string; phone: string; interest: string; time: string }) {
+  try {
+    if (!process.env.N8N_WEBHOOK_URL) return
+    await fetch(process.env.N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+  } catch (err) {
+    console.error("N8N failed:", err)
+  }
+}
+
+async function sendWhatsApp(phone: string, message: string) {
+  try {
+    const instance = process.env.GREEN_API_INSTANCE
+    const token = process.env.GREEN_API_TOKEN
+    if (!instance || !token) return
+    const chatId = phone.replace(/[\s\-]/g, "").replace(/^0/, "92") + "@c.us"
+    await fetch(
+      `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId, message })
+      }
+    )
+  } catch (err) {
+    console.error("WhatsApp failed:", err)
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { message, sessionId } = await req.json()
@@ -125,8 +155,7 @@ export async function POST(req: NextRequest) {
     }
 
     const session = getSession(sessionId)
-    const MAX = 20
-    if (session.count >= MAX) {
+    if (session.count >= 20) {
       return NextResponse.json({ error: `Limit ho gayi. Call karein: ${BUSINESS_INFO.phone}` }, { status: 429 })
     }
     session.count++
@@ -136,25 +165,23 @@ export async function POST(req: NextRequest) {
 
     await new Promise(r => setTimeout(r, 400 + Math.random() * 500))
 
-    // Spam check
-    if (detectSpam(message)) {
-      return NextResponse.json({ response: `Maafi — samajh nahi aaya. Call karein: ${BUSINESS_INFO.phone}` })
-    }
-
-    // Business hours — first message only
-    if (session.count === 1 && false) {
-      const closed = session.lang === "urdu"
-        ? `السلام علیکم! 😊\n\nابھی دفتر بند ہے۔\n🕐 ${BUSINESS_INFO.timing}\n\nمیں آپ کے سوالوں کا جواب دے سکتا ہوں — پوچھیں!`
-        : session.lang === "roman"
-        ? `Assalam o Alaikum! 😊\n\nAbhi office band hai.\n🕐 ${BUSINESS_INFO.timing}\n\nMain aap ke sawaalon ka jawab de sakta hoon — poochein!`
-        : `Hello! 😊\n\nOffice is currently closed.\n🕐 ${BUSINESS_INFO.timing}\n\nI can still answer your questions!`
-      return NextResponse.json({ response: closed })
+    // Business hours — first message
+    if (session.count === 1 && !isOfficeOpen()) {
+      return NextResponse.json({
+        response: session.lang === "urdu"
+          ? `السلام علیکم! 😊\n\nابھی دفتر بند ہے۔\n🕐 ${BUSINESS_INFO.timing}\n\nمیں آپ کے سوالوں کا جواب دے سکتا ہوں!`
+          : session.lang === "roman"
+          ? `Assalam o Alaikum! 😊\n\nAbhi office band hai.\n🕐 ${BUSINESS_INFO.timing}\n\nMain aap ke sawaalon ka jawab de sakta hoon!`
+          : `Hello! 😊\n\nOffice is currently closed.\n🕐 ${BUSINESS_INFO.timing}\n\nI can still answer your questions!`
+      })
     }
 
     // Stage: collecting name
     if (session.stage === "collecting_name") {
       if (message.trim().length < 2) {
-        return NextResponse.json({ response: session.lang === "urdu" ? "براہ کرم اپنا نام لکھیں:" : "Please apna naam likhein:" })
+        return NextResponse.json({
+          response: session.lang === "urdu" ? "براہ کرم اپنا نام لکھیں:" : "Please apna naam likhein:"
+        })
       }
       session.name = message.trim()
       session.stage = "collecting_phone"
@@ -180,7 +207,7 @@ export async function POST(req: NextRequest) {
       session.stage = "confirm2"
       return NextResponse.json({
         response: session.lang === "urdu"
-          ? `آخری تصدیق:\n\n👤 نام: ${session.name}\n📞 نمبر: ${session.phone}\n💬 مطلب: ${session.interest}\n\nکیا یہ درست ہے؟\n\n✅ جی ہاں\n❌ نہیں`
+          ? `آخری تصدیق:\n\n👤 نام: ${session.name}\n📞 نمبر: ${session.phone}\n💼 مطلب: ${session.interest}\n\nکیا یہ درست ہے؟\n\n✅ جی ہاں\n❌ نہیں`
           : session.lang === "roman"
           ? `Last confirmation:\n\n👤 Naam: ${session.name}\n📞 Number: ${session.phone}\n💬 Interest: ${session.interest}\n\nKya yeh sahi hai?\n\n✅ Haan\n❌ Nahi`
           : `Final confirmation:\n\n👤 Name: ${session.name}\n📞 Number: ${session.phone}\n💬 Interest: ${session.interest}\n\nIs this correct?\n\n✅ Yes\n❌ No`
@@ -188,41 +215,33 @@ export async function POST(req: NextRequest) {
     }
 
     // Stage: confirm2
-   if (session.stage === "confirm2") {
+    if (session.stage === "confirm2") {
       if (isYes(message)) {
         session.stage = "done"
-        leads.push({ name: session.name, phone: session.phone, interest: session.interest, time: new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" }) })
+        const time = new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })
+        leads.push({ name: session.name, phone: session.phone, interest: session.interest, time })
         console.log("🔔 NEW LEAD:", session.name, session.phone)
 
-        // N8N webhook call
-        try {
-          await fetch(process.env.N8N_WEBHOOK_URL!, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: session.name,
-              phone: session.phone,
-              interest: session.interest,
-              time: new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })
-            })
-          })
-        } catch (err) {
-          console.error("N8N webhook failed:", err)
-        }
+        // N8N notification
+        await sendToN8N({ name: session.name, phone: session.phone, interest: session.interest, time })
 
         return NextResponse.json({
           response: session.lang === "urdu"
-            ? `⏳ شکریہ ${session.name}!\n\nآپ کی details موصول ہو گئی ہیں۔\n\n📋 Status: *Pending*\n\nہمارا staff جلد آپ سے رابطہ کرے گا اور appointment confirm کرے گا۔\n\n📞 خود بھی call کر سکتے ہیں:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
+            ? `⏳ شکریہ ${session.name}!\n\nآپ کی details موصول ہو گئی ہیں۔\n\n📋 Status: *Pending*\n\nہمارا staff جلد آپ سے رابطہ کرے گا۔\n\n📞 ${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
             : session.lang === "roman"
-            ? `⏳ Shukriya ${session.name}!\n\nAapki details mil gayi hain.\n\n📋 Status: *Pending*\n\nHamara staff jald aap se rabta karega aur appointment confirm karega.\n\n📞 Khud bhi call kar sakte hain:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
-            : `⏳ Thank you ${session.name}!\n\nYour details have been received.\n\n📋 Status: *Pending*\n\nOur staff will contact you shortly to confirm your appointment.\n\n📞 You can also call us:\n${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
+            ? `⏳ Shukriya ${session.name}!\n\nAapki details mil gayi hain.\n\n📋 Status: *Pending*\n\nHamara staff jald rabta karega.\n\n📞 ${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
+            : `⏳ Thank you ${session.name}!\n\nYour details received.\n\n📋 Status: *Pending*\n\nOur staff will contact you shortly.\n\n📞 ${BUSINESS_INFO.phone}\n🕐 ${BUSINESS_INFO.timing}`
         })
       }
       if (isNo(message)) {
         session.stage = "normal"
-        return NextResponse.json({ response: session.lang === "urdu" ? "ٹھیک ہے! کوئی اور سوال؟ 😊" : "Theek hai! Koi aur sawaal? 😊" })
+        return NextResponse.json({
+          response: session.lang === "urdu" ? "ٹھیک ہے! کوئی اور سوال؟ 😊" : "Theek hai! Koi aur sawaal? 😊"
+        })
       }
-      return NextResponse.json({ response: session.lang === "urdu" ? "✅ جی ہاں\n❌ نہیں" : "✅ Haan\n❌ Nahi" })
+      return NextResponse.json({
+        response: session.lang === "urdu" ? "✅ جی ہاں\n❌ نہیں" : "✅ Haan\n❌ Nahi"
+      })
     }
 
     // Stage: confirm1
@@ -250,7 +269,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Normal stage — check appointment intent FIRST
+    // Normal stage
     if (session.stage === "normal" && hasAppointmentIntent(message)) {
       session.stage = "confirm1"
       session.interest = message.slice(0, 100)
@@ -263,7 +282,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // FAQ quick match
+    // FAQ match
     const faqAnswer = quickFaq(message)
     if (faqAnswer) return NextResponse.json({ response: faqAnswer })
 
