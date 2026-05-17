@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateAppointmentPdf } from "@/lib/pdf/generateAppointmentPdf"
 
-function getFileName(name: string, interest: string): string {
-  const n = name.replace(/\s+/g, "_")
+function getFileName(interest: string): string {
   const s = interest.toLowerCase()
-  if (/rent|kiraya|کرایہ/.test(s)) return `Rent_Agreement_${n}.pdf`
-  if (/property|zameen|جائیداد|plot/.test(s)) return `Property_Agreement_${n}.pdf`
-  if (/sale|deed|فروخت/.test(s)) return `Sale_Deed_${n}.pdf`
-  if (/consult|مشاورت/.test(s)) return `Consultation_${n}.pdf`
-  return `Contract_${n}.pdf`
+  if (/rent|kiraya/.test(s)) return "Rent Agreement"
+  if (/property|zameen|plot/.test(s)) return "Property Agreement"
+  if (/sale|deed/.test(s)) return "Sale Deed"
+  if (/consult/.test(s)) return "Consultation"
+  return "Contract"
 }
 
 export async function POST(req: NextRequest) {
@@ -19,77 +17,43 @@ export async function POST(req: NextRequest) {
     const token = process.env.GREEN_API_TOKEN
     const clientPhone = process.env.CLIENT_WHATSAPP
 
-    if (!instance || !token || !clientPhone) return NextResponse.json({ error: "Missing env" }, { status: 500 })
+    if (!instance || !token || !clientPhone) {
+      return NextResponse.json({ error: "Missing env" }, { status: 500 })
+    }
 
     const chatId = `${clientPhone}@c.us`
-    const fileName = getFileName(name, interest)
+    const service = getFileName(interest)
     const baseUrl = "https://alnoor-legal-chatbot.vercel.app"
     const confirmUrl = `${baseUrl}/api/confirm?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&interest=${encodeURIComponent(interest)}`
     const cancelUrl = `${baseUrl}/api/cancel?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
 
-    // Step 1: Generate PDF
-    const pdfBuffer = await generateAppointmentPdf({ name, phone, interest, time })
-
-    // Step 2: Send PDF
-    const formData = new FormData()
-    formData.append("file", new Blob([pdfBuffer as unknown as ArrayBuffer], { type: "application/pdf" }), fileName)
-    formData.append("chatId", chatId)
-    formData.append("caption",
-      `📋 *${fileName.replace(/_/g, " ").replace(".pdf", "")}*\n\n` +
+    // Professional WhatsApp message to client
+    const message =
+      `🔔 *AL-NOOR Legal Services*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 *${service} Request*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
       `👤 *Customer:* ${name}\n` +
       `📞 *Phone:* ${phone}\n` +
       `💼 *Service:* ${interest}\n` +
-      `🕐 *Time:* ${time}`
-    )
+      `🕐 *Time:* ${time}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `✅ *MEETING CONFIRM:*\n${confirmUrl}\n\n` +
+      `❌ *MEETING CANCEL:*\n${cancelUrl}\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `_AL-NOOR AI Chatbot System_`
 
     await fetch(
-      `https://7107.api.greenapi.com/waInstance${instance}/sendFileByUpload/${token}`,
-      { method: "POST", body: formData }
-    )
-
-    // Wait 2 seconds
-    await new Promise(r => setTimeout(r, 2000))
-
-    // Step 3: Try buttons — fallback to text
-    const btnRes = await fetch(
-      `https://7107.api.greenapi.com/waInstance${instance}/sendButtons/${token}`,
+      `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatId,
-          message: `*Action Required — ${name}*\n\n👤 ${name}\n📞 ${phone}\n💼 ${interest}`,
-          buttons: [
-            { buttonId: "confirm", buttonText: "✅ Meeting Confirmed" },
-            { buttonId: "cancel",  buttonText: "❌ Meeting Cancel" }
-          ],
-          footer: "AL-NOOR Legal Services"
-        })
+        body: JSON.stringify({ chatId, message })
       }
     )
 
-    // If buttons fail — send text with links
-    if (!btnRes.ok) {
-      await fetch(
-        `https://7107.api.greenapi.com/waInstance${instance}/sendMessage/${token}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chatId,
-            message:
-              `┌─────────────────────┐\n` +
-              `     *ACTION REQUIRED*\n` +
-              `└─────────────────────┘\n\n` +
-              `✅ *Meeting Confirm:*\n${confirmUrl}\n\n` +
-              `❌ *Meeting Cancel:*\n${cancelUrl}\n\n` +
-              `_AL-NOOR Legal Services_`
-          })
-        }
-      )
-    }
-
     return NextResponse.json({ success: true })
+
   } catch (err) {
     console.error("send-pdf error:", err)
     return NextResponse.json({ error: "Failed" }, { status: 500 })
